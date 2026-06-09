@@ -693,6 +693,15 @@ if "ai_context_limit" not in st.session_state:
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.title("Data Analysis Toolkit")
+    
+    with st.expander("🗺️ Sidebar Map", expanded=False):
+        st.markdown("""
+        **Quick Guide to this Sidebar:**
+        - 🧭 **Navigate**: Switch between analysis tools and modules.
+        - 💾 **Data Loading**: Upload your CSV or load sample data to start.
+        - 📋 **Report Builder**: Track and manage items added to your final PDF.
+        """)
+    
     st.markdown("---")
     TOOLS = [
         "Home",
@@ -710,9 +719,38 @@ with st.sidebar:
         "Generate PDF Report",
         "AI Assistant",
     ]
-    tool = st.radio("Navigate", TOOLS, label_visibility="collapsed")
+    tool = st.radio("Navigate",TOOLS, label_visibility="collapsed")
     st.markdown("---")
+
+    st.markdown("### :material/database: Data Loading")
     
+    # Sidebar Dataset Upload
+    uploaded_sidebar = st.file_uploader("Upload a CSV file", type=["csv"], key="sidebar_uploader")
+    if uploaded_sidebar is not None:
+        try:
+            st.session_state["df"] = pd.read_csv(uploaded_sidebar)
+            st.success("Dataset loaded successfully!")
+        except Exception as exc:
+            st.error(f"Could not read file: {exc}")
+
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        if st.button("Load Sample Data", use_container_width=True):
+            st.session_state["df"] = generate_sample_data()
+            st.success("Sample loaded!")
+            st.rerun()
+    
+    # Show current dataset status in sidebar
+    df_current = st.session_state.get("df")
+    if df_current is not None:
+        st.markdown(f"**Active Dataset:** {df_current.shape[0]} rows, {df_current.shape[1]} cols")
+        if st.button(":material/delete: Clear Dataset", use_container_width=True):
+            st.session_state["df"] = None
+            st.rerun()
+    else:
+        st.info("No dataset loaded")
+
+    st.markdown("---")
     # Report Builder Status
     st.markdown("### :material/content_paste: Report Builder")
     n_items = len(st.session_state.report_items)
@@ -724,10 +762,9 @@ with st.sidebar:
     else:
         st.info("No items added yet")
     st.caption("Use 'Add to Report' buttons in each tool to build your report.")
-    
+
     st.markdown("---")
     st.caption("SRH · Tools & Methods of Data Analysis")
-
 tool_key = tool
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -738,13 +775,50 @@ page = tool if 'choice' in locals() else (menu if 'menu' in locals() else "Home"
 if tool == "Home":
     st.title(":material/analytics: Data Analysis Toolkit")
     st.subheader("Your All-in-One Workspace for Statistical Analysis & Data Science")
-    
+
+    with st.container(border=True):
+        st.markdown("### :material/map: Quick Workspace Map")
+        m_col1, m_col2, m_col3 = st.columns(3)
+        with m_col1:
+            st.markdown("**1. Setup**\n- Upload CSV\n- Load Samples\n- Clean Data")
+        with m_col2:
+            st.markdown("**2. Analyze**\n- Stats & Visuals\n- Probability\n- Inference")
+        with m_col3:
+            st.markdown("**3. Export**\n- AI Synthesis\n- PDF Report\n- CSV Export")
+
     st.markdown("""
     Welcome to the Data Analysis Toolkit. This application is designed to streamline your entire data workflow from initial raw file exploration to advanced statistical hypothesis testing and automated report generation.
     """)
+
+    st.markdown("### :material/menu_book: Documentation & User Guide")
+    doc_tab1, doc_tab2, doc_tab3 = st.tabs(["🚀 Quick Start", "📚 Methodology", "🛠️ Troubleshooting"])
     
+    with doc_tab1:
+        st.markdown("""
+        **How to get started in 3 steps:**
+        1. **Load Data**: Use the sidebar uploader to import your `.csv` file or click 'Load Sample Data'.
+        2. **Explore & Clean**: Visit the **Data Explorer** to check for missing values and clean your dataset.
+        3. **Analyze**: Select any tool from the 'Navigate' menu (e.g., *Descriptive Statistics* or *Regression Analysis*) to generate insights.
+        """)
+        
+    with doc_tab2:
+        st.markdown("""
+        **Statistical Rigor:**
+        - **Parametric vs Non-Parametric**: We provide automated checks. If the *Shapiro-Wilk* test fails (p < 0.05), we recommend using the Non-Parametric alternatives (like *Mann-Whitney U*).
+        - **ClT**: The Central Limit Theorem tool demonstrates how sampling distributions converge to normality as sample size increases.
+        - **Regression**: Our models include $R^2$ and MSE metrics to validate the goodness-of-fit.
+        """)
+        
+    with doc_tab3:
+        st.markdown("""
+        **Common Issues:**
+        - **File Error**: Ensure your CSV is properly encoded (UTF-8) and doesn't have merged cells.
+        - **Empty Analysis**: Most tools require an active dataset. If you see "No dataset loaded", check the sidebar.
+        - **Report Empty**: Remember to click the **'Add to Report'** button inside each tool before going to the *Generate PDF Report* page.
+        """)
+
     st.write("---")
-    
+
     # --- SECTION 1: KEY FEATURES GRID ---
     st.markdown("## :material/star: Key Features & Core Modules")
     col1, col2 = st.columns(2)
@@ -871,43 +945,9 @@ elif tool_key == "Data Explorer":
               help="Upload a CSV, preview rows, inspect data types and missing values, "
                    "detect outliers (IQR), clean/impute data, and export the result.")
 
-    # --- NEW: Sample Data Button ---
-    col_btn1, col_btn2 = st.columns([3, 1])
-    with col_btn1:
-        uploaded = st.file_uploader("Upload a CSV file", type=["csv"])
-    with col_btn2:
-        if st.button("Load Sample Data", use_container_width=True):
-            st.session_state["df"] = generate_sample_data()
-            st.success("Sample data loaded!")
-            st.rerun()
-    # --------------------------------
-
-    if uploaded is not None:
-        try:
-            st.session_state["df"] = pd.read_csv(uploaded)
-            st.success("Dataset loaded successfully.")
-        except Exception as exc:
-            st.error(f"Could not read file: {exc}")
-
-elif tool_key == "Data Explorer":
-    st.header("Data Explorer",
-              help="Upload a CSV, preview rows, inspect data types and missing values, "
-                   "detect outliers (IQR), clean/impute data, and export the result.")
-
-    col_up, col_smp = st.columns([3, 1])
-    with col_up:
-        uploaded = st.file_uploader("Upload a CSV file", type=["csv"])
-
-    if uploaded is not None:
-        try:
-            st.session_state["df"] = pd.read_csv(uploaded)
-            st.success("Dataset loaded successfully.")
-        except Exception as exc:
-            st.error(f"Could not read file: {exc}")
-
     df = st.session_state.get("df")
     if df is None:
-        st.info("Upload a CSV file to begin.")
+        st.info("No dataset loaded. Please upload a CSV or load sample data from the sidebar to begin.")
         st.stop()
 
     # Overview
@@ -972,36 +1012,100 @@ elif tool_key == "Data Explorer":
             st.pyplot(fig, width="content")
             plt.close(fig)
 
-    # Data cleaning
+    # Data cleaning - ENHANCED with Mode Imputation
     with st.expander("Data Cleaning — Handle Missing Values"):
-        num_miss_cols = [c for c in df.columns if df[c].isnull().any()]
-        if not num_miss_cols:
-            st.success("No missing values — nothing to clean.")
-        else:
-            clean_col = st.selectbox("Column", num_miss_cols, key="clean_col")
-            clean_method = st.selectbox(
-                "Strategy",
-                ["Drop rows", "Fill with Mean", "Fill with Median", "Fill with 0"],
-            )
-            if st.button("Apply"):
-                df2 = df.copy()
-                if clean_method == "Drop rows":
-                    df2 = df2.dropna(subset=[clean_col])
-                elif clean_method == "Fill with Mean":
-                    df2[clean_col] = df2[clean_col].fillna(df2[clean_col].mean())
-                elif clean_method == "Fill with Median":
-                    df2[clean_col] = df2[clean_col].fillna(df2[clean_col].median())
-                else:
-                    df2[clean_col] = df2[clean_col].fillna(0)
-                st.session_state["df"] = df2
-                st.success(f"Applied '{clean_method}' to **{clean_col}**. Rows now: {len(df2)}")
+        num_miss_cols = [c for c in df.columns if df[c].isnull().any() and pd.api.types.is_numeric_dtype(df[c])]
+        cat_miss_info = []
+        cat_clean_cols = [c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c]) and df[c].isnull().any()]
 
-    # Export
+        for cat_col in cat_clean_cols:
+            mode_val = df[cat_col].mode()
+            if len(mode_val) > 0:
+                cat_miss_info.append((cat_col, mode_val.iloc[0]))
+
+        all_clean_candidates = num_miss_cols + [c[0] for c in cat_miss_info]
+
+        if not all_clean_candidates:
+            st.success("No missing values found — nothing to clean.")
+        else:
+            clean_col_label = st.selectbox("Select Column with Missing Values", all_clean_candidates, key="clean_col")
+
+            # Determine if numeric or categorical for method display
+            is_numeric = pd.api.types.is_numeric_dtype(df[clean_col_label])
+
+            options_if_numeric = ["Drop rows at this column", "Fill with Mean", "Fill with Median", "Fill with 0"]
+            
+            # Fix the string representation of mode for the dropdown
+            mode_val_for_label = "Unknown"
+            for col, val in cat_miss_info:
+                if col == clean_col_label:
+                    mode_val_for_label = val
+                    break
+            options_if_categorical = ["Drop rows at this column", f"Fill with Mode ({mode_val_for_label})"]
+
+            # Determine available methods
+            current_options = options_if_categorical if not is_numeric and clean_col_label in cat_clean_cols else options_if_numeric
+            
+            clean_method = st.selectbox(
+                "Imputation Strategy",
+                current_options,
+                key="clean_method"
+            )
+
+            if st.button("Apply Cleaning"):
+                df2 = df.copy()
+                applied_desc = ""
+
+                if clean_method == "Drop rows at this column":
+                    dropped_rows = len(df2) - df2.dropna(subset=[clean_col_label]).shape[0]
+                    df2 = df2.dropna(subset=[clean_col_label])
+                    applied_desc = f"Removed {dropped_rows} row(s)"
+
+                elif clean_method == "Fill with Mean":
+                    if is_numeric:
+                        fill_val = df2[clean_col_label].mean()
+                        prev_count = df2[clean_col_label].isna().sum()
+                        df2[clean_col_label] = df2[clean_col_label].fillna(fill_val)
+                        applied_desc = f"Filled {prev_count} missing value(s) with mean ({fill_val:.4f})"
+
+                elif clean_method == "Fill with Median":
+                    if is_numeric:
+                        fill_val = df2[clean_col_label].median()
+                        prev_count = df2[clean_col_label].isna().sum()
+                        df2[clean_col_label] = df2[clean_col_label].fillna(fill_val)
+                        applied_desc = f"Filled {prev_count} missing value(s) with median ({fill_val:.4f})"
+
+                elif clean_method == "Fill with 0":
+                    prev_count = df2[clean_col_label].isna().sum()
+                    df2[clean_col_label] = df2[clean_col_label].fillna(0)
+                    applied_desc = f"Filled {prev_count} missing value(s) with 0"
+
+                elif "Fill with Mode" in clean_method:
+                    if not is_numeric and clean_col_label in cat_clean_cols:
+                        # Find the mode value from our pre-calculated list
+                        mode_val = next((v for c, v in cat_miss_info if c == clean_col_label), None)
+                        prev_count = df2[clean_col_label].isna().sum()
+                        df2[clean_col_label] = df2[clean_col_label].fillna(mode_val)
+                        applied_desc = f"Filled {prev_count} missing value(s) with mode ({mode_val})"
+
+                st.session_state["df"] = df2
+                st.success(f"✅ Applied: '{applied_desc}' to **{clean_col_label}**")
+                st.rerun()
+
+    # Export Dataset
     with st.expander("Export Dataset"):
         buf = io.StringIO()
         df.to_csv(buf, index=False)
-        st.download_button(":material/download: Download CSV", data=buf.getvalue(),
-                           file_name="dataset.csv", mime="text/csv")
+        
+        st.markdown("**Original Data:** (clicking this downloads the original unchanged CSV)")
+        st.download_button(
+            ":material/download: Download Original CSV",
+            data=buf.getvalue(),
+            file_name="dataset_original.csv",
+            mime="text/csv"
+        )
+
+        st.markdown("**Note:** Apply cleaning operations in the 'Data Cleaning' section above first, then refresh this page to export your cleaned dataset.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DESCRIPTIVE STATISTICS
