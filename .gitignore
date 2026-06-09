@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+.env
+.venv
+
+# IDE / Editor (.txt)
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Streamlit Caches & State
+.streamlit/
+st_page_cache.yaml
+
+# Project Specific - Exclude Virtual Environment and Generated Data
+venv/
+ai_memory.json
+
+# Logs
+*.log
+pip.log
+
+# Backup / Temporary files
+*.bak
+*.tmp
+~*
